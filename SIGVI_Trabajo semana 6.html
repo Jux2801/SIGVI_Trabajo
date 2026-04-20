@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Papelería — Sistema de Citas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f4f4f8; color: #1a1a2e; }
+
+    #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-card {
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+      padding: 2.5rem 2rem; width: 100%; max-width: 380px;
+    }
+    .login-logo { font-size: 36px; text-align: center; margin-bottom: 6px; }
+    .login-card h1 { font-size: 22px; margin-bottom: 2px; color: #534AB7; text-align: center; }
+    .login-card .sub { font-size: 13px; color: #666; margin-bottom: 1.5rem; text-align: center; }
+    label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; margin-top: 12px; }
+    input[type="text"], input[type="password"], input[type="date"],
+    input[type="time"], select {
+      width: 100%; padding: 10px 12px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 14px; background: #fafafa; color: #1a1a2e;
+    }
+    input:focus, select:focus { outline: none; border-color: #534AB7; }
+    .btn {
+      display: block; width: 100%; padding: 11px;
+      background: #534AB7; color: #fff; border: none;
+      border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 1.25rem;
+    }
+    .btn:hover { background: #3C3489; }
+    .btn-outline { background: transparent; color: #534AB7; border: 1px solid #534AB7; margin-top: 10px; }
+    .btn-outline:hover { background: #EEEDFE; }
+    .btn-danger { background: #E24B4A; color: #fff; border: none; }
+    .btn-danger:hover { background: #A32D2D; }
+    .btn-sm { display: inline-block; width: auto; padding: 6px 14px; font-size: 13px; margin-top: 0; }
+    .error-msg {
+      color: #A32D2D; font-size: 13px; margin-top: 10px;
+      background: #FCEBEB; padding: 8px 12px; border-radius: 8px; display: none;
+    }
+    .forgot { font-size: 13px; color: #534AB7; cursor: pointer; text-align: center; margin-top: 12px; display: block; }
+    .forgot:hover { text-decoration: underline; }
+
+    #forgot-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 999;
+    }
+    #forgot-modal.open { display: flex; }
+    .modal-card { background: #fff; border-radius: 12px; padding: 2rem; width: 100%; max-width: 360px; }
+    .modal-card h2 { font-size: 16px; margin-bottom: 8px; }
+    .modal-card > p { font-size: 13px; color: #666; margin-bottom: 1rem; }
+
+    .contact-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; }
+    .contact-item {
+      display: flex; align-items: center; gap: 12px;
+      background: #f4f4f8; border-radius: 10px; padding: 12px 14px;
+    }
+    .contact-icon {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 18px;
+    }
+    .contact-icon.email { background: #EEEDFE; }
+    .contact-icon.whatsapp { background: #E1F5EE; }
+    .contact-label { font-size: 11px; color: #888; margin-bottom: 2px; }
+    .contact-value { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+    .contact-link { font-size: 12px; color: #534AB7; text-decoration: none; margin-top: 3px; display: inline-block; }
+    .contact-link:hover { text-decoration: underline; }
+
+    #dashboard-screen { display: none; min-height: 100vh; }
+    .topbar {
+      background: #534AB7; color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.5rem; height: 56px; flex-wrap: wrap; gap: 8px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-icon { font-size: 20px; }
+    .topbar-title { font-size: 18px; font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-user { font-size: 13px; opacity: 0.85; }
+    .role-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
+    .role-admin    { background: #FAC775; color: #412402; }
+    .role-empleado { background: #9FE1CB; color: #04342C; }
+    .topbar-logout {
+      background: rgba(255,255,255,0.15); border: none; color: #fff;
+      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    }
+    .topbar-logout:hover { background: rgba(255,255,255,0.25); }
+
+    .main { padding: 1.5rem; max-width: 1000px; margin: 0 auto; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+    .stat-card { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+    .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .stat-value { font-size: 26px; font-weight: 700; color: #534AB7; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .tab { padding: 8px 18px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 14px; color: #555; }
+    .tab.active { background: #534AB7; color: #fff; border-color: #534AB7; }
+    .tab:hover:not(.active) { background: #f0f0f8; }
+
+    .panel { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+    .panel h2 { font-size: 16px; font-weight: 600; margin-bottom: 1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media(max-width:500px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 500px; }
+    th { text-align: left; padding: 10px 12px; color: #555; font-weight: 600; border-bottom: 2px solid #eee; font-size: 13px; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+    tr:hover td { background: #fafafa; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge-pendiente  { background: #FAEEDA; color: #854F0B; }
+    .badge-confirmada { background: #EAF3DE; color: #3B6D11; }
+    .badge-cancelada  { background: #FCEBEB; color: #A32D2D; }
+    .empty { text-align: center; padding: 2rem; color: #aaa; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">✏️</div>
+    <h1>Papelería</h1>
+    <p class="sub">Sistema de Gestión de Citas</p>
+    <label>Usuario</label>
+    <input type="text" id="login-user" placeholder="Ingresa tu usuario"/>
+    <label>Contraseña</label>
+    <input type="password" id="login-pass" placeholder="••••••••"/>
+    <div class="error-msg" id="login-error">Usuario o contraseña incorrectos.</div>
+    <button class="btn" onclick="login()">Ingresar</button>
+    <span class="forgot" onclick="openForgot()">¿Olvidaste tu contraseña?</span>
+  </div>
+</div>
+
+<!-- MODAL OLVIDAR CONTRASEÑA -->
+<div id="forgot-modal">
+  <div class="modal-card">
+    <h2>¿Olvidaste tu contraseña?</h2>
+    <p>Contacta al administrador para recuperar tu acceso:</p>
+    <div class="contact-block">
+      <div class="contact-item">
+        <div class="contact-icon email">✉️</div>
+        <div>
+          <div class="contact-label">Correo electrónico</div>
+          <div class="contact-value">administrador@gmail.com</div>
+          <a class="contact-link" href="mailto:administrador@gmail.com?subject=Recuperar%20contrase%C3%B1a">Enviar correo →</a>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon whatsapp">💬</div>
+        <div>
+          <div class="contact-label">WhatsApp</div>
+          <div class="contact-value">+57 320 372 0249</div>
+          <a class="contact-link" href="https://wa.me/573203720249?text=Hola%2C%20necesito%20recuperar%20mi%20contrase%C3%B1a" target="_blank">Abrir WhatsApp →</a>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-outline" onclick="closeForgot()">Cerrar</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard-screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-icon">✏️</span>
+      <span class="topbar-title">Papelería — Citas</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbar-user"></span>
+      <span class="role-badge" id="topbar-role"></span>
+      <button class="topbar-logout" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats">
+      <div class="stat-card"><div class="stat-label">Total citas</div><div class="stat-value" id="stat-total">0</div></div>
+      <div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-value" id="stat-pendiente" style="color:#BA7517;">0</div></div>
+      <div class="stat-card"><div class="stat-label">Confirmadas</div><div class="stat-value" id="stat-confirmada" style="color:#3B6D11;">0</div></div>
+      <div class="stat-card"><div class="stat-label">Canceladas</div><div class="stat-value" id="stat-cancelada" style="color:#A32D2D;">0</div></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('lista')">Clientes</div>
+      <div class="tab" onclick="showTab('nueva')">Impresiones</div>
+      <div class="tab" id="tab-usuarios-btn" onclick="showTab('usuarios')" style="display:none;">Usuarios</div>
+    </div>
+
+    <!-- Clientes -->
+    <div class="panel" id="tab-lista">
+      <h2>Clientes registrados</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Cliente</th><th>Fecha</th><th>Hora</th><th>Motivo</th><th>Estado</th><th id="th-acciones"></th></tr>
+          </thead>
+          <tbody id="tabla-citas"></tbody>
+        </table>
+        <div class="empty" id="empty-msg" style="display:none;">No hay clientes registrados aún.</div>
+      </div>
+    </div>
+
+    <!-- Impresiones -->
+    <div class="panel" id="tab-nueva" style="display:none;">
+      <h2>Nueva impresión / cita</h2>
+      <div class="form-grid">
+        <div><label>Nombre del cliente</label><input type="text" id="f-nombre" placeholder="Ej: María López"/></div>
+        <div><label>Motivo</label><input type="text" id="f-motivo" placeholder="Ej: Impresión de documentos"/></div>
+        <div><label>Fecha</label><input type="date" id="f-fecha"/></div>
+        <div><label>Hora</label><input type="time" id="f-hora"/></div>
+        <div>
+          <label>Estado</label>
+          <select id="f-estado">
+            <option value="pendiente">Pendiente</option>
+            <option value="confirmada">Confirmada</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+      </div>
+      <div class="error-msg" id="form-error"></div>
+      <button class="btn" style="max-width:220px; margin-top:1.25rem;" onclick="crearCita()">Guardar</button>
+    </div>
+
+    <!-- Usuarios (solo admin) -->
+    <div class="panel" id="tab-usuarios" style="display:none;">
+      <h2>Usuarios del sistema</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Usuario</th><th>Contraseña</th><th>Rol</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>1</td><td>admin123</td><td>admin123</td>
+              <td><span class="badge badge-pendiente">Administrador</span></td>
+            </tr>
+            <tr>
+              <td>2</td><td>empleados@gmail.com</td><td>ventas123</td>
+              <td><span class="badge badge-confirmada">Empleado</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const USUARIOS = [
+    { usuario: 'admin123',            password: 'admin123',  rol: 'admin',    nombre: 'Administrador' },
+    { usuario: 'empleados@gmail.com', password: 'ventas123', rol: 'empleado', nombre: 'Empleado'      }
+  ];
+
+  let rolActual = '';
+  let citas = JSON.parse(localStorage.getItem('papeleria_citas') || '[]');
+
+  function login() {
+    const u = document.getElementById('login-user').value.trim();
+    const p = document.getElementById('login-pass').value;
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+    const found = USUARIOS.find(x => x.usuario === u && x.password === p);
+    if (!found) { errEl.style.display = 'block'; return; }
+    rolActual = found.rol;
+    mostrarDashboard(found);
+  }
+
+  function logout() {
+    rolActual = '';
+    document.getElementById('dashboard-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+  }
+
+  function openForgot()  { document.getElementById('forgot-modal').classList.add('open'); }
+  function closeForgot() { document.getElementById('forgot-modal').classList.remove('open'); }
+
+  function mostrarDashboard(user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard-screen').style.display = 'block';
+    document.getElementById('topbar-user').textContent = user.nombre;
+    const rolBadge = document.getElementById('topbar-role');
+    rolBadge.textContent = user.rol === 'admin' ? 'Administrador' : 'Empleado';
+    rolBadge.className = 'role-badge ' + (user.rol === 'admin' ? 'role-admin' : 'role-empleado');
+    document.getElementById('tab-usuarios-btn').style.display = user.rol === 'admin' ? 'block' : 'none';
+    document.getElementById('th-acciones').textContent = user.rol === 'admin' ? 'Acciones' : '';
+    showTab('lista');
+    renderCitas();
+  }
+
+  function showTab(tab) {
+    ['lista','nueva','usuarios'].forEach(t => {
+      document.getElementById('tab-' + t).style.display = 'none';
+    });
+    document.getElementById('tab-' + tab).style.display = 'block';
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    const tabs = document.querySelectorAll('.tab');
+    if (tab === 'lista')    tabs[0].classList.add('active');
+    if (tab === 'nueva')    tabs[1].classList.add('active');
+    if (tab === 'usuarios') tabs[2].classList.add('active');
+  }
+
+  function renderCitas() {
+    const tbody = document.getElementById('tabla-citas');
+    const empty = document.getElementById('empty-msg');
+    tbody.innerHTML = '';
+    if (citas.length === 0) {
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      citas.forEach((c, i) => {
+        const tr = document.createElement('tr');
+        const accion = rolActual === 'admin'
+          ? `<button class="btn btn-danger btn-sm" onclick="eliminarCita(${i})">Eliminar</button>`
+          : '';
+        tr.innerHTML = `
+          <td>${i+1}</td><td>${c.nombre}</td><td>${c.fecha}</td>
+          <td>${c.hora}</td><td>${c.motivo}</td>
+          <td><span class="badge badge-${c.estado}">${c.estado}</span></td>
+          <td>${accion}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    document.getElementById('stat-total').textContent      = citas.length;
+    document.getElementById('stat-pendiente').textContent  = citas.filter(c => c.estado === 'pendiente').length;
+    document.getElementById('stat-confirmada').textContent = citas.filter(c => c.estado === 'confirmada').length;
+    document.getElementById('stat-cancelada').textContent  = citas.filter(c => c.estado === 'cancelada').length;
+  }
+
+  function crearCita() {
+    const nombre = document.getElementById('f-nombre').value.trim();
+    const motivo = document.getElementById('f-motivo').value.trim();
+    const fecha  = document.getElementById('f-fecha').value;
+    const hora   = document.getElementById('f-hora').value;
+    const estado = document.getElementById('f-estado').value;
+    const errEl  = document.getElementById('form-error');
+    errEl.style.display = 'none';
+    if (!nombre || !motivo || !fecha || !hora) {
+      errEl.textContent = 'Por favor completa todos los campos.';
+      errEl.style.display = 'block';
+      return;
+    }
+    citas.push({ nombre, motivo, fecha, hora, estado });
+    localStorage.setItem('papeleria_citas', JSON.stringify(citas));
+    document.getElementById('f-nombre').value = '';
+    document.getElementById('f-motivo').value = '';
+    document.getElementById('f-fecha').value  = '';
+    document.getElementById('f-hora').value   = '';
+    showTab('lista');
+    renderCitas();
+  }
+
+  function eliminarCita(i) {
+    if (!confirm('¿Seguro que deseas eliminar este registro?')) return;
+    citas.splice(i, 1);
+    localStorage.setItem('papeleria_citas', JSON.stringify(citas));
+    renderCitas();
+  }
+</script>
+</body>
+</html>
